@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>房市棱镜 · 房价趋势与购房决策助手</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="container">
+        <!-- 头部情绪区 (不变) -->
+        <header class="hero-section">
+            <div class="hero-text">
+                <h1><i class="fas fa-chart-line"></i> 房市棱镜 · 理性决策</h1>
+                <p>实时洞察分化市场 | 房贷精算 | 城市热力 | 购房能力评估</p>
+            </div>
+            <div class="market-mood">
+                <div class="mood-card">
+                    <span class="mood-label">市场情绪指数</span>
+                    <div class="mood-value" id="moodIndex">42</div>
+                    <div class="mood-range">偏向观望 · 磨底期</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 42%;"></div></div>
+                </div>
+                <div class="mood-card">
+                    <span class="mood-label">政策宽松指数</span>
+                    <div class="mood-value" id="policyIndex">67</div>
+                    <div class="mood-range">托而不举 · 因城施策</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 67%;"></div></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主网格... (保持不变) -->
+        <div class="grid-2col">
+            <div class="card calculator-card">
+                <h2><i class="fas fa-calculator"></i> 房贷精算师</h2>
+                <div class="calc-form">
+                    <div class="input-group">
+                        <label><i class="fas fa-home"></i> 房屋总价 (万元)</label>
+                        <input type="number" id="totalPrice" value="300" step="10">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>首付比例 (%)</label>
+                            <input type="number" id="downPercent" value="30" step="5">
+                        </div>
+                        <div class="input-group">
+                            <label>贷款年限 (年)</label>
+                            <input type="number" id="loanYears" value="30">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>贷款利率 (%)</label>
+                        <input type="number" id="interestRate" value="4.2" step="0.05">
+                        <div class="rate-shortcuts">
+                            <span class="rate-pill" data-rate="4.2">商业4.2%</span>
+                            <span class="rate-pill" data-rate="3.1">公积金3.1%</span>
+                            <span class="rate-pill" data-rate="3.8">组合3.8%</span>
+                        </div>
+                    </div>
+                    <div class="radio-group">
+                        <label><input type="radio" name="repayType" value="equal" checked> 等额本息</label>
+                        <label><input type="radio" name="repayType" value="principal"> 等额本金</label>
+                    </div>
+                    <button id="calcLoanBtn"><i class="fas fa-chart-pie"></i> 重新计算 & 更新图表</button>
+                </div>
+                <div class="calc-result" id="calcResult">
+                    <div class="result-line"><span>🏦 贷款总额</span><strong id="loanAmountSpan">0 万元</strong></div>
+                    <div class="result-line"><span>📆 月供 (首月)</span><strong id="monthlySpan">— 元</strong></div>
+                    <div class="result-line"><span>💰 支付总利息</span><strong id="totalInterestSpan">— 元</strong></div>
+                    <div class="result-line"><span>📌 还款总额</span><strong id="totalPaymentSpan">— 元</strong></div>
+                </div>
+                <canvas id="repaymentChart" width="400" height="200" style="max-height: 200px; margin-top: 16px;"></canvas>
+                <div class="calc-note">*等额本金月供逐月递减，图表展示本息累计对比</div>
+            </div>
+
+            <div class="card trend-card">
+                <h2><i class="fas fa-city"></i> 重点城市房价热力</h2>
+                <div class="city-grid" id="cityGrid"></div>
+                <div class="chart-container">
+                    <canvas id="cityTrendChart" height="180"></canvas>
+                </div>
+                <div class="trend-note">*数据综合机构预测，模拟近期环比变化</div>
+            </div>
+        </div>
+
+        <!-- 第二行：购房能力评估 + 提前还贷工具 + 热点话题 (话题列表容器) -->
+        <div class="grid-3col">
+            <div class="card afford-card">
+                <h3><i class="fas fa-hand-holding-usd"></i> 可负担能力评估</h3>
+                <div class="input-group">
+                    <label>家庭月收入 (元)</label>
+                    <input type="number" id="monthlyIncome" value="25000" step="1000">
+                </div>
+                <div class="input-group">
+                    <label>现有月支出 (不含房贷)</label>
+                    <input type="number" id="monthlyExpense" value="8000" step="1000">
+                </div>
+                <button id="affordBtn"><i class="fas fa-balance-scale"></i> 评估可承受月供</button>
+                <div id="affordResult" class="afford-result">
+                    最大合理月供 ≈ <strong id="maxMonthly">—</strong> 元
+                </div>
+                <div class="advice-text" id="affordAdvice"></div>
+            </div>
+
+            <div class="card prepay-card">
+                <h3><i class="fas fa-coins"></i> 提前还贷 vs 理财</h3>
+                <div class="input-group">
+                    <label>剩余贷款本金 (万元)</label>
+                    <input type="number" id="remainingLoan" value="100" step="10">
+                </div>
+                <div class="input-group">
+                    <label>房贷年利率 (%)</label>
+                    <input type="number" id="loanRate" value="4.2" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>闲置资金 (万元)</label>
+                    <input type="number" id="cashAmount" value="20" step="5">
+                </div>
+                <div class="input-group">
+                    <label>理财预期年化 (%)</label>
+                    <input type="number" id="investYield" value="2.8" step="0.2">
+                </div>
+                <button id="compareBtn"><i class="fas fa-chart-simple"></i> 对比分析</button>
+                <div id="prepayResult" class="prepay-result">
+                    结论: <span>—</span>
+                </div>
+            </div>
+
+            <!-- 热点话题区域（动态生成可点击话题） -->
+            <div class="card hot-topics">
+                <h3><i class="fas fa-fire"></i> 🔥 当下最热话题 · 点击跳转搜索</h3>
+                <ul class="topic-list" id="topicList">
+                    <!-- 话题列表将由 JS 动态生成，点击后百度搜索 -->
+                </ul>
+                <div class="news-ticker">
+                    <i class="fas fa-newspaper"></i> 最新: 深圳、武汉公积金贷款额度提至120万
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-quote">
+                <i class="fas fa-quote-left"></i> 任泽平: 未来楼市二八分化，一线城市三年内全域放开限购。中信建投: 核心城市是复苏排头兵。
+            </div>
+            <div class="copyright">© 房市棱镜 · 数据综合自机构研报及市场动态 | 计算结果仅供参考，不构成投资建议</div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
